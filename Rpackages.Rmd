@@ -1,0 +1,20 @@
+---
+output: github_document
+---
+
+recommendations for useful R-packages and functions
+
+# import/export data
+
+- rio
+    - import
+    - export
+
+# basic summary statistics
+
+- skimr
+    - skim
+
+
+
+
