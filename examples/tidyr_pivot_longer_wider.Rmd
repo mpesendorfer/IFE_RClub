@@ -1,0 +1,39 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev = c('png', 'pdf'), dpi = 300, dev.args = list(bg = 'transparent'))
+```
+
+# example conversion between long and wide format
+
+```{r}
+iris_long <- iris %>% 
+  tidyr::pivot_longer(data = ., cols = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width), names_to = "TheCovariates", values_to = "TheValues")
+
+# convert back to wide:
+iris_long %>% 
+  tidyr::pivot_wider(names_from = "TheCovariates", values_from = "TheValues") # ooops .... what happened?
+# --> some rows are absolutely identical... adding a unique row ID before converting to long format will solve the issue 
+
+iris_long <- iris %>% 
+  tibble::rownames_to_column() %>% 
+  tidyr::pivot_longer(data = ., cols = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width), names_to = "TheCovariates", values_to = "TheValues")
+
+iris_wide <- iris_long %>% 
+  tidyr::pivot_wider(names_from = "TheCovariates", values_from = "TheValues") %>% 
+  select(-rowname) # rowname can be removed again...
+```
+
+# Why should we deal with long vs wide data formats??
+-  e.g. for graphical visualization with ggplot...
+
+```{r}
+iris_long %>% 
+  ggplot() +
+  geom_boxplot(aes(TheCovariates, TheValues, fill = Species))
+```
+
+# take home message:
+- Always add unique row identifiers when converting data into long format!
