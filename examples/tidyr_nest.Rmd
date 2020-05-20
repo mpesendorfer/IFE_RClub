@@ -1,0 +1,61 @@
+---
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(dev = c('png', 'pdf'), dpi = 300, dev.args = list(bg = 'transparent'))
+```
+
+# what is a nested dataframe?
+
+- think of it as a multidimensional dataframe: instead of columns containing single values, now each cell represents a vector, a dataframe, an object, a function, .... 
+
+# min example
+
+```{r}
+iris_nested <- iris %>% 
+  tidyr::nest(-Species) 
+iris_unnested <- iris_nested %>% 
+  unnest()
+```
+
+# first things first...
+
+- restructure the data in a way, that the information about what was measured (Sepal Length, Petal Width...) is inclued in a column (4 times more rows, less columns == long format)
+    - reason: we want to nest the values for that column (="group") later
+
+```{r}
+iris_long <- iris %>% 
+  tibble::rownames_to_column() %>% 
+  tidyr::pivot_longer(data = ., cols = c(Sepal.Length, Sepal.Width, Petal.Length, Petal.Width), names_to = "TheItem", values_to = "TheValues")
+```
+
+# why should we nest data?
+
+- e.g. to run a function on several groups in parallel (i.e. 1000 linear regression models with a single line of code...)
+
+```{r}
+iris_nested <- iris_long %>% 
+  dplyr::select(-rowname) %>% 
+  dplyr::group_by(Species, TheItem) %>% 
+  tidyr::nest() 
+
+iris_summary_stats_multigroups <- iris_nested %>% 
+  dplyr::mutate(MySummary = purrr::map(data, function(x) broom::tidy(summary(x$TheValues)))) 
+
+iris_summary_stats_multigroups # the output (in this case our summary) is a list (dataframe with multiple columns) and will be nested automatically 
+iris_summary_stats_multigroups %>% tidyr::unnest(MySummary) # unnest summary (data still nested)
+```
+
+# take home message
+
+- 3 steps in this workflow:
+    - 1. **Split** data into groups
+    - 2. **apply** some function on the data within each group
+    - 3. **combine** the results 
+
+# more on that topic:
+
+- [nice examples](https://r4ds.had.co.nz/many-models.html)
+- [the theory behind functionnals - quite advanced](https://adv-r.hadley.nz/functionals.html)
+
